@@ -23,6 +23,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        ref: demo
 
       - name: Build disease matrix
         id: matrix
