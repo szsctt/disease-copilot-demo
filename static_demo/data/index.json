@@ -1,0 +1,8 @@
+{
+  "diseases": [
+    {
+      "label": "Duchenne muscular dystrophy",
+      "path": "./data/duchenne-muscular-dystrophy.json"
+    }
+  ]
+}

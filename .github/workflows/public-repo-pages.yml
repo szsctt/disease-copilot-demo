@@ -1,0 +1,175 @@
+name: deploy-pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build disease matrix
+        id: matrix
+        run: |
+          matrix_json="$(python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          disease_file = Path("static_demo/diseases.txt")
+          if not disease_file.exists():
+              raise RuntimeError(f"Missing disease list: {disease_file}")
+          diseases = []
+          for line in disease_file.read_text(encoding="utf-8").splitlines():
+              value = line.strip()
+              if not value or value.startswith("#"):
+                  continue
+              slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+              diseases.append({"name": value, "slug": slug})
+          if not diseases:
+              raise RuntimeError("No diseases found in static_demo/diseases.txt")
+          print(json.dumps(diseases))
+          PY
+          )"
+          echo "matrix=${matrix_json}" >> "$GITHUB_OUTPUT"
+
+  precompute:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.discover.outputs.matrix) }}
+    steps:
+      - name: Checkout public repo
+        uses: actions/checkout@v4
+
+      - name: Checkout private precompute source
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.PRECOMPUTE_SOURCE_REPO }}
+          ref: ${{ vars.PRECOMPUTE_SOURCE_REF || 'main' }}
+          token: ${{ secrets.PRECOMPUTE_SOURCE_TOKEN }}
+          path: precompute_source
+
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          generate-run-shell: true
+          environment-file: precompute_source/environment.yml
+          environment-name: pybio
+
+      - name: Precompute disease
+        working-directory: precompute_source
+        run: |
+          python -m scripts.precompute_static_demo \
+            --disease "${{ matrix.name }}" \
+            --output-dir ../disease_output \
+            --redownload-papers \
+            --skip-index \
+            --no-clean
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          OPENAI_EMBED_MODEL: ${{ vars.OPENAI_EMBED_MODEL }}
+          OPENAI_EMBED_DIM: ${{ vars.OPENAI_EMBED_DIM }}
+          CHROMA_PATH: .data/chroma
+          CHROMA_COLLECTION_PREFIX: ${{ vars.CHROMA_COLLECTION_PREFIX }}
+          NCBI_ENTREZ_EMAIL: ${{ secrets.NCBI_ENTREZ_EMAIL }}
+          OPENAI_INPUT_COST_PER_1M_TOKENS: ${{ vars.OPENAI_INPUT_COST_PER_1M_TOKENS }}
+          OPENAI_OUTPUT_COST_PER_1M_TOKENS: ${{ vars.OPENAI_OUTPUT_COST_PER_1M_TOKENS }}
+          MAX_PAPERS_PER_DISEASE: ${{ vars.MAX_PAPERS_PER_DISEASE }}
+          MIN_PAPERS_PER_DISEASE: ${{ vars.MIN_PAPERS_PER_DISEASE }}
+          MAX_COST_USD_PER_QUERY: ${{ vars.MAX_COST_USD_PER_QUERY }}
+          LLM_MAX_OUTPUT_TOKENS: ${{ vars.LLM_MAX_OUTPUT_TOKENS }}
+          LLM_MAX_RETRIES: ${{ vars.LLM_MAX_RETRIES }}
+          LLM_MAX_EVIDENCE_PACKETS: ${{ vars.LLM_MAX_EVIDENCE_PACKETS }}
+          LLM_MAX_CHARS_PER_PACKET: ${{ vars.LLM_MAX_CHARS_PER_PACKET }}
+          CHUNK_MAX_TOKENS: ${{ vars.CHUNK_MAX_TOKENS }}
+          DROP_UNVERIFIED_CITATIONS: true
+        shell: micromamba-shell {0}
+
+      - name: Upload disease artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: disease-${{ matrix.slug }}
+          path: disease_output/${{ matrix.slug }}.json
+
+  deploy:
+    needs: precompute
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download precomputed disease data
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded_diseases
+          pattern: disease-*
+          merge-multiple: true
+
+      - name: Assemble static site payload
+        run: |
+          set -euo pipefail
+          rm -rf site
+          mkdir -p site/data
+          cp -R static_demo/. site/
+          cp downloaded_diseases/*.json site/data/
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          names = []
+          for line in Path("static_demo/diseases.txt").read_text(encoding="utf-8").splitlines():
+              value = line.strip()
+              if not value or value.startswith("#"):
+                  continue
+              names.append(value)
+
+          payload = {
+              "diseases": [
+                  {
+                      "label": name,
+                      "path": f"./data/{re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')}.json",
+                  }
+                  for name in names
+              ]
+          }
+          Path("site/data/index.json").write_text(
+              json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

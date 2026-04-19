@@ -1,0 +1,47 @@
+{
+  "disease_name": "Duchenne muscular dystrophy",
+  "run_id": 1001,
+  "last_run_at": "2026-04-09T02:10:00+00:00",
+  "cost_usd": 0.1249,
+  "input_tokens": 4210,
+  "output_tokens": 1180,
+  "papers": [
+    {
+      "doi": "10.1000/dmd.2026.001",
+      "pmid": "40000001",
+      "pmcid": "PMC1200001",
+      "title": "Gene replacement outcomes in Duchenne muscular dystrophy",
+      "pdf_path": ".data/pdfs/10.1000_dmd.2026.001.pdf"
+    },
+    {
+      "doi": "10.1000/dmd.2026.002",
+      "pmid": "40000002",
+      "pmcid": "PMC1200002",
+      "title": "Natural history and progression biomarkers in Duchenne muscular dystrophy",
+      "pdf_path": ".data/pdfs/10.1000_dmd.2026.002.pdf"
+    }
+  ],
+  "scores": [
+    {
+      "criterion_name": "Unmet medical need",
+      "score": 5,
+      "confidence": 5,
+      "rationale": "DMD has severe morbidity, mortality, and limited durable treatment options.",
+      "citations_json": "[{\"doi\":\"10.1000/dmd.2026.002\",\"pmid\":\"40000002\",\"pmcid\":\"PMC1200002\",\"chunk_index\":2,\"chunk_text\":\"**Disease progression is marked by early loss of ambulation and progressive cardiopulmonary decline despite standard care.**\",\"chunk_text_raw\":\"Disease progression is marked by early loss of ambulation and progressive cardiopulmonary decline despite standard care.\",\"highlight_start_word\":0,\"highlight_end_word\":14}]"
+    },
+    {
+      "criterion_name": "Clinical feasibility",
+      "score": 4,
+      "confidence": 4,
+      "rationale": "Vector delivery and trial endpoints are established, but durability and immune responses remain risks.",
+      "citations_json": "[{\"doi\":\"10.1000/dmd.2026.001\",\"pmid\":\"40000001\",\"pmcid\":\"PMC1200001\",\"chunk_index\":4,\"chunk_text\":\"**Systemic vector delivery produced functional microdystrophin expression with variable durability across cohorts.**\",\"chunk_text_raw\":\"Systemic vector delivery produced functional microdystrophin expression with variable durability across cohorts.\",\"highlight_start_word\":0,\"highlight_end_word\":11},{\"doi\":\"10.1000/dmd.2026.001\",\"pmid\":\"40000001\",\"pmcid\":\"PMC1200001\",\"chunk_index\":7,\"chunk_text\":\"**Transient transaminitis and pre-existing anti-capsid immunity were key exclusion or management considerations.**\",\"chunk_text_raw\":\"Transient transaminitis and pre-existing anti-capsid immunity were key exclusion or management considerations.\",\"highlight_start_word\":0,\"highlight_end_word\":11}]"
+    },
+    {
+      "criterion_name": "Commercial viability",
+      "score": 3,
+      "confidence": 3,
+      "rationale": "Population size and high development/manufacturing costs create a moderate viability profile.",
+      "citations_json": "[{\"doi\":\"10.1000/dmd.2026.002\",\"pmid\":\"40000002\",\"pmcid\":\"PMC1200002\",\"chunk_index\":9,\"chunk_text\":\"**Eligible prevalence remains limited, requiring efficient trial design and manufacturing scale controls.**\",\"chunk_text_raw\":\"Eligible prevalence remains limited, requiring efficient trial design and manufacturing scale controls.\",\"highlight_start_word\":0,\"highlight_end_word\":10}]"
+    }
+  ]
+}
