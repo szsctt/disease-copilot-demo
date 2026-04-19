@@ -78,7 +78,7 @@ jobs:
       - name: Precompute disease
         working-directory: precompute_source
         run: |
-          python -m scripts.precompute_static_demo \
+          python scripts/precompute_static_demo.py \
             --disease "${{ matrix.name }}" \
             --output-dir ../disease_output \
             --redownload-papers \
