@@ -68,6 +68,22 @@ jobs:
           token: ${{ secrets.PRECOMPUTE_SOURCE_TOKEN }}
           path: precompute_source
 
+      - name: Validate precompute source checkout
+        run: |
+          set -euo pipefail
+          if [ ! -f precompute_source/environment.yml ]; then
+            echo "Missing precompute_source/environment.yml" >&2
+            echo "Check PRECOMPUTE_SOURCE_REPO and PRECOMPUTE_SOURCE_REF point to the private source repo/branch." >&2
+            exit 1
+          fi
+          if [ ! -f precompute_source/scripts/precompute_static_demo.py ]; then
+            echo "Missing precompute_source/scripts/precompute_static_demo.py" >&2
+            echo "Check PRECOMPUTE_SOURCE_REPO and PRECOMPUTE_SOURCE_REF point to the private source repo/branch (not the stripped public repo)." >&2
+            echo "Top-level files in precompute_source:" >&2
+            ls -la precompute_source >&2
+            exit 1
+          fi
+
       - name: Setup micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
