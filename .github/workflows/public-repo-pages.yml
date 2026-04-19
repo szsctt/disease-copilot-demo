@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ secrets.PRECOMPUTE_SOURCE_REPO }}
-          ref: ${{ vars.PRECOMPUTE_SOURCE_REF || 'demo' }}
+          ref: ${{ vars.PRECOMPUTE_SOURCE_REF || 'main' }}
           token: ${{ secrets.PRECOMPUTE_SOURCE_TOKEN }}
           path: precompute_source
 
@@ -94,7 +94,7 @@ jobs:
       - name: Precompute disease
         working-directory: precompute_source
         run: |
-          python scripts/precompute_static_demo.py \
+          PYTHONPATH=. python scripts/precompute_static_demo.py \
             --disease "${{ matrix.name }}" \
             --output-dir ../disease_output \
             --redownload-papers \
