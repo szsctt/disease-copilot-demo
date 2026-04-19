@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ secrets.PRECOMPUTE_SOURCE_REPO }}
-          ref: ${{ vars.PRECOMPUTE_SOURCE_REF || 'main' }}
+          ref: ${{ vars.PRECOMPUTE_SOURCE_REF || 'demo' }}
           token: ${{ secrets.PRECOMPUTE_SOURCE_TOKEN }}
           path: precompute_source
 
